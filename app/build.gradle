@@ -1,5 +1,5 @@
 apply plugin: 'com.android.application'
-
+apply plugin: BumpReadMeVersionPlugin
 android {
     compileSdkVersion 23
     buildToolsVersion "23.0.3"
@@ -8,7 +8,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0"
+        versionName "1.3"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -28,8 +28,66 @@ dependencies {
     androidTestCompile 'com.android.support.test:runner:0.5'
     androidTestCompile 'com.android.support:support-annotations:23.4.0'
 }
+
+class BumpVersion extends DefaultTask{
+    def readMe
+    def versionName
+    File getReadMe(){
+        project.file(readMe)
+    }
+    BumpVersion(){
+        group = 'pluginBasics'
+    }
+
+    @TaskAction
+    def bump(){
+        description = 'Update ReadMe file with the latest vesrion'
+        File readMe = getReadMe()
+        String content = readMe.getText('UTF-8')
+        content = content.replaceAll("pluginBasics:.*", "pluginBasics:${versionName}")
+        readMe.write(content, 'UTF-8')
+
+    }
+}
+
+
+class BumpReadMeVersionPlugin implements Plugin<Project> {
+
+    void apply(Project project) {
+        project.afterEvaluate{
+            project.task('bumpVersion',type: BumpVersion){
+                readMe = new File(project.rootDir.absolutePath + "/README.md")
+                versionName = project.android.defaultConfig.versionName
+            }
+        }
+
+    }
+}
+
+/* STAGE-2
+class BumpReadMeVersionPlugin implements Plugin<Project> {
+
+    void apply(Project project) {
+        project.task('bumpVersion') << {
+            group = 'pluginBasics'
+            description = 'Update the README to the latest version'
+            File readMe = new File(project.rootDir.absolutePath + "/README.md")
+            String content = readMe.getText('UTF-8')
+            content = content.replaceAll("pluginBasics:.*", "pluginBasics:${project.android.defaultConfig.versionName}")
+            readMe.write(content, 'UTF-8')
+        }
+
+    }
+}*/
+
+
+/* STAGE-1
 task bumpVersion{
     group = 'pluginBasics'
     description = 'Update the README to the latest version'
+    File readMe = new File(rootDir.absolutePath + "/README.md")
+    String content = readMe.getText('UTF-8')
+    content = content.replaceAll("pluginBasics:.*", "pluginBasics:${android.defaultConfig.versionName}")
+    readMe.write(content,'UTF-8')
+}*/
 
-}
